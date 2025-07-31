@@ -42,7 +42,7 @@ class App {
 
       await Process.start(
         'dart',
-        ['--enable-vm-service', 'run', 'lib/src/hot_reload.dart', rootPath],
+        ['--enable-vm-service', 'run', 'flint_dart:hot_reload', rootPath],
         environment: {'FLINT_HOT': '1'},
         mode: ProcessStartMode.inheritStdio,
       );
