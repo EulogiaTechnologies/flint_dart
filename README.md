@@ -23,7 +23,12 @@ Developed and maintained by **[Eulogia Technologies](https://flintdart.eulogia.n
 ### 1. Add Flint to your project
 
 ```bash
-dart pub add flint_dart
+dart pub add flint_dart ```
+
+
+<pre> ```bash dart run ``` </pre>
+
+```bash 
 import 'package:flint_dart/flint_dart.dart';
 
 void main() {
@@ -35,38 +40,43 @@ void main() {
 
   app.listen(3000);
 }
-3. Run with hot reload
-dart run
+```
+### 3. Run with hot reload
+```bash
+
+
 app.get('/hello', (req, res) async {
   res.json({'message': 'Hello, world!'});
 });
 
-Middleware
-dart
-Copy
-Edit
+```
+
+### Middleware
+
+```bash
+
 app.use((next) {
   return (req, res) async {
     print('${req.method} ${req.path}');
     await next(req, res);
   };
 });
-JWT Authentication
-dart
-Copy
-Edit
+
+```
+### JWT Authentication
+```bash
 final token = JwtUtil.generateToken({'userId': 123});
 final payload = JwtUtil.verifyToken(token);
-Password Hashing
-dart
-Copy
-Edit
+
+```
+### Password Hashing
+```bash
 final hash = Hashing.hashPassword('mySecret');
 final isValid = Hashing.verifyPassword('mySecret', hash);
-📁 Project Structure
-css
-Copy
-Edit
+```
+  ### 📁 Project Structure
+
+```bash
 lib/
 ├── flint_dart.dart
 ├── src/
@@ -78,6 +88,7 @@ lib/
 │   └── security/
 │       ├── jwt_util.dart
 │       └── hashing.dart
+```
 📮 Contact & Support
 🌐 Website: flintdart.eulogia.net
 
@@ -88,10 +99,9 @@ lib/
 🛠 Contributing
 We welcome contributions! To get started:
 
-bash
-Copy
-Edit
+```bash
 git clone https://github.com/eulogiatechnologies/flint_dart.git
 cd flint_dart
 dart pub get
+```
 Then feel free to submit issues or pull requests.
