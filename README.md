@@ -23,10 +23,13 @@ Developed and maintained by **[Eulogia Technologies](https://flintdart.eulogia.n
 ### 1. Add Flint to your project
 
 ```bash
-dart pub add flint_dart ```
+dart pub add flint_dart
+ ```
 
 
-<pre> ```bash dart run ``` </pre>
+ ```bash 
+ dart run 
+ ``` 
 
 ```bash 
 import 'package:flint_dart/flint_dart.dart';
