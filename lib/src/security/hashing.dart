@@ -1,13 +1,31 @@
 // File: lib/src/security/hashing.dart
+
 import 'dart:convert';
 import 'package:crypto/crypto.dart';
+import 'package:bcrypt/bcrypt.dart';
+
+enum HashingAlgorithm { bcrypt, sha256 }
 
 class Hashing {
-  static String password(String password) {
-    return sha256.convert(utf8.encode(password)).toString();
+  final HashingAlgorithm algorithm;
+
+  const Hashing({this.algorithm = HashingAlgorithm.bcrypt});
+
+  String hash(String password) {
+    switch (algorithm) {
+      case HashingAlgorithm.bcrypt:
+        return BCrypt.hashpw(password, BCrypt.gensalt());
+      case HashingAlgorithm.sha256:
+        return sha256.convert(utf8.encode(password)).toString();
+    }
   }
 
-  static bool verify(String password, String hash) {
-    return Hashing.password(password) == hash;
+  bool verify(String password, String hash) {
+    switch (algorithm) {
+      case HashingAlgorithm.bcrypt:
+        return BCrypt.checkpw(password, hash);
+      case HashingAlgorithm.sha256:
+        return sha256.convert(utf8.encode(password)).toString() == hash;
+    }
   }
 }

@@ -17,17 +17,37 @@ class Response {
     int status = 200,
     String contentType = 'text/plain',
   }) {
-    raw.statusCode = status;
-    raw.headers.contentType = ContentType.parse(contentType);
-    raw.write(body);
+    try {
+      raw.statusCode = status;
+      raw.headers.contentType = ContentType.parse(contentType);
+      raw.write(body);
+    } catch (e) {
+      // Fallback error response in case of encoding issues or bad string
+      raw.statusCode = 500;
+      raw.headers.contentType = ContentType.text;
+      raw.write('❌ Failed to send response: Invalid content.');
+    }
   }
 
   /// Sends a JSON response with a map.
   ///
   /// - [data]: A map of data to be converted to JSON.
   /// - [status]: The HTTP status code (default: 200).
-  void json(Map<String, dynamic> data, {int status = 200}) {
-    send(jsonEncode(data), status: status, contentType: 'application/json');
+  void json(dynamic data, {int status = 200}) {
+    try {
+      // Ensure only serializable types are encoded
+      final encoded = jsonEncode(data);
+
+      raw.statusCode = status;
+      raw.headers.contentType = ContentType.json;
+      raw.write(encoded);
+    } catch (e) {
+      // Fallback response for encoding errors
+      raw.statusCode = 500;
+      raw.headers.contentType = ContentType.text;
+      raw.write('❌ Failed to encode JSON response: ${e.runtimeType}');
+      print('[Flint] JSON Error: $e');
+    }
   }
 
   /// Sets the status code of the response without sending data.
