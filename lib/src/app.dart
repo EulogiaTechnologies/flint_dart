@@ -1,5 +1,4 @@
 import 'dart:io';
-
 import 'middleware.dart';
 import 'request.dart';
 import 'response.dart';
@@ -7,9 +6,18 @@ import 'router.dart';
 
 class App {
   String rootPath;
-  App({this.rootPath = "bin"});
+  App({this.rootPath = "bin"}) {
+    // _initializeDatabase(); // Auto-init DB when app is created
+  }
+
   final Router _router = Router();
   final List<Middleware> _middlewares = [];
+  bool _dbInitialized = false;
+
+  // await DB.connect();
+
+  // Add a getter to check DB status
+  bool get isDatabaseConnected => _dbInitialized;
 
   void get(String path, Handler handler) => _router.add('GET', path, handler);
   void post(String path, Handler handler) => _router.add('POST', path, handler);
@@ -23,8 +31,9 @@ class App {
       _router.add(method.toUpperCase(), path, handler);
 
   void use(Middleware middleware) => _middlewares.add(middleware);
+
   void mount(String prefix, void Function(App subApp) callback) {
-    final subApp = App(rootPath: rootPath); // 👈 inherit rootPath from parent
+    final subApp = App(rootPath: rootPath);
     callback(subApp);
 
     for (final route in subApp._router.routes) {
@@ -36,21 +45,23 @@ class App {
     }
   }
 
-  void listen(int port) async {
+  Future<void> listen(int port) async {
+    if (!_dbInitialized) {
+      print('Warning: Database connection not established');
+    }
+
     if (Platform.environment['FLINT_HOT'] != '1') {
       print('[FLINT] Starting with hot reload...');
 
       await Process.start(
         'dart',
-        ['--enable-vm-service', 'run', 'flint_dart:hot_reload', rootPath],
+        ['--enable-vm-service', 'run', 'flintdart:hot_reload', rootPath],
         environment: {'FLINT_HOT': '1'},
         mode: ProcessStartMode.inheritStdio,
       );
 
-      exit(0); // Exit the initial process
+      exit(0);
     }
-
-    // If already in hot mode, continue as normal
 
     final server = await HttpServer.bind(InternetAddress.anyIPv4, port);
     print('Server running on http://localhost:$port');
