@@ -9,3 +9,5 @@ export 'src/router.dart';
 export 'src/middleware.dart';
 export 'src/request.dart';
 export 'src/response.dart';
+export 'model.dart';
+export 'schema.dart';
