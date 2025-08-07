@@ -1,12 +1,19 @@
 import 'package:flint_dart/src/env_parser.dart';
-import 'package:mysql1/mysql1.dart';
+import 'package:mysql_dart/mysql_dart.dart';
 
+/// Provides static methods for managing a MySQL database connection.
 class DB {
-  static MySqlConnection? _connection;
+  /// Internal singleton MySQL connection instance.
+  static MySQLConnection? _connection;
+
+  /// Tracks whether the connection has been initialized.
   static bool _isInitialized = false;
 
-  // Option 1: Manual configuration
-  static Future<MySqlConnection> connect({
+
+  
+
+  /// Manually establish connection using config values.
+  static Future<MySQLConnection> connect({
     required String host,
     required int port,
     required String user,
@@ -24,51 +31,86 @@ class DB {
     return _connection!;
   }
 
-  // Option 2: Auto-configure from .env
-  static Future<MySqlConnection> autoConnect() async {
-    await FlintEnv.load(); // Load .env file
+  /// Automatically connect using environment variables.
+  static Future<MySQLConnection> autoConnect() async {
+    await FlintEnv.load();
+
+    final host = FlintEnv.get('DB_HOST', 'localhost');
+    final port = FlintEnv.getInt('DB_PORT', 3306);
+    final user = FlintEnv.get('DB_USER', 'flint_sample');
+    final password = FlintEnv.get('DB_PASSWORD', 'flint_sample');
+    final db = FlintEnv.get('DB_NAME', 'flint_sample');
+
+    print("🔍 ENV VALUES LOADED:");
+    print(" - DB_HOST: $host");
+    print(" - DB_PORT: $port");
+    print(" - DB_USER: $user");
+    print(" - DB_PASSWORD: $password");
+    print(" - DB_NAME: $db");
 
     _connection = await _createConnection(
-      host: FlintEnv.get('DB_HOST', 'localhost'),
-      port: FlintEnv.getInt('DB_PORT', 3306),
-      user: FlintEnv.get('DB_USER', 'root'),
-      password: FlintEnv.get('DB_PASSWORD', ''),
-      db: FlintEnv.get('DB_NAME', 'flint_db'),
+      host: host,
+      port: port,
+      user: user,
+      password: password,
+      db: db,
     );
     _isInitialized = true;
     return _connection!;
   }
 
-  static Future<MySqlConnection> _createConnection({
+  /// Internal helper to create a new MySQL connection.
+  static Future<MySQLConnection> _createConnection({
     required String host,
     required int port,
     required String user,
     required String password,
     required String db,
   }) async {
-    return await MySqlConnection.connect(
-      ConnectionSettings(
+    try {
+      print("🔌 Connecting to MySQL at $host:$port as $user to DB $db...");
+      final conn = await MySQLConnection.createConnection(
         host: host,
         port: port,
-        user: user,
+        userName: user,
         password: password,
-        db: db,
-      ),
-    );
+        databaseName: db,
+      );
+      await conn.connect();
+      print("✅ Connection successful.");
+      return conn;
+    } catch (e, st) {
+      print("❌ Failed to connect to MySQL:");
+      print("   Error: $e");
+      print("   Stacktrace: $st");
+      rethrow;
+    }
   }
 
-  static MySqlConnection get instance {
-    if (!_isInitialized) {
-      throw Exception(
-          "Database not initialized. Call DB.connect() or DB.autoConnect() first.");
+  /// Execute a raw SQL query (non-select).
+  static Future<void> execute(String sql) async {
+    final conn = instance;
+    try {
+      await conn.execute(sql);
+    } catch (e, st) {
+      print("❌ SQL execution failed: $e");
+      print("📄 SQL: $sql");
+      print("📍 Stacktrace: $st");
+      rethrow;
     }
-    if (_connection == null) {
+  }
+
+  /// Return the active connection instance.
+  static MySQLConnection get instance {
+    if (!_isInitialized || _connection == null) {
       throw Exception(
-          "Database connection failed. Check your connection parameters.");
+        "Database not initialized. Call DB.connect() or DB.autoConnect() first.",
+      );
     }
     return _connection!;
   }
 
+  /// Closes and resets the database connection.
   static Future<void> close() async {
     await _connection?.close();
     _connection = null;

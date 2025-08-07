@@ -1,6 +1,12 @@
-// File: lib/src/response.dart
 import 'dart:convert';
 import 'dart:io';
+
+/// Supported response types
+enum RespondType {
+  json,
+  html,
+  plain,
+}
 
 class Response {
   final HttpResponse raw;
@@ -8,10 +14,6 @@ class Response {
   Response(this.raw);
 
   /// Sends a plain text or custom content response.
-  ///
-  /// - [body]: The response body string.
-  /// - [status]: The HTTP status code (default: 200).
-  /// - [contentType]: The content type (default: 'text/plain').
   void send(
     String body, {
     int status = 200,
@@ -22,27 +24,20 @@ class Response {
       raw.headers.contentType = ContentType.parse(contentType);
       raw.write(body);
     } catch (e) {
-      // Fallback error response in case of encoding issues or bad string
       raw.statusCode = 500;
       raw.headers.contentType = ContentType.text;
       raw.write('❌ Failed to send response: Invalid content.');
     }
   }
 
-  /// Sends a JSON response with a map.
-  ///
-  /// - [data]: A map of data to be converted to JSON.
-  /// - [status]: The HTTP status code (default: 200).
+  /// Sends a JSON response with a map or list.
   void json(dynamic data, {int status = 200}) {
     try {
-      // Ensure only serializable types are encoded
       final encoded = jsonEncode(data);
-
       raw.statusCode = status;
       raw.headers.contentType = ContentType.json;
       raw.write(encoded);
     } catch (e) {
-      // Fallback response for encoding errors
       raw.statusCode = 500;
       raw.headers.contentType = ContentType.text;
       raw.write('❌ Failed to encode JSON response: ${e.runtimeType}');
@@ -50,15 +45,53 @@ class Response {
     }
   }
 
+  /// Automatically responds based on [RespondType] or inferred type.
+  void respond(
+    dynamic data, {
+    int status = 200,
+    RespondType? type,
+  }) {
+    try {
+      type ??= _inferRespondType(data);
+
+      switch (type) {
+        case RespondType.json:
+          json(data, status: status);
+          break;
+        case RespondType.html:
+          send(data.toString(), status: status, contentType: 'text/html');
+          break;
+        case RespondType.plain:
+        default:
+          send(data.toString(), status: status, contentType: 'text/plain');
+      }
+    } catch (e) {
+      raw.statusCode = 500;
+      raw.headers.contentType = ContentType.text;
+      raw.write('❌ Failed to send response: ${e.runtimeType}');
+      print('[Flint] respond() Error: $e');
+    }
+  }
+
+  /// Infers response type from data.
+  RespondType _inferRespondType(dynamic data) {
+    if (data is Map || data is List) {
+      return RespondType.json;
+    } else if (data is String &&
+        (data.contains('<html') || data.contains('<!DOCTYPE html'))) {
+      return RespondType.html;
+    } else {
+      return RespondType.plain;
+    }
+  }
+
   /// Sets the status code of the response without sending data.
-  /// Useful for middleware or header-only responses.
   Response status(int code) {
     raw.statusCode = code;
     return this;
   }
 
-  /// Sends a predefined status message with a common HTTP status code.
-  /// This also closes the response automatically.
+  /// Sends a predefined status message and closes the response.
   void sendStatus(int code) {
     final message = _statusMessages[code] ?? 'Status';
     send(message, status: code);

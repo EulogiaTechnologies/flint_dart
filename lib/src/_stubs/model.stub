@@ -1,0 +1,27 @@
+import 'package:flint_dart/src/orm/model.dart';
+
+class {{ClassName}} extends Model<{{ClassName}}> {
+  int? id;
+
+  @override
+  Map<String, dynamic> toMap() => {
+    'id': id,
+  };
+
+  @override
+  {{ClassName}} fromMap(Map<String, dynamic> map) => {{ClassName}}()
+    ..id = map['id'];
+
+  @override
+  Table get table => Table(
+    name: '{{table_name}}',
+    columns: [
+      Column(
+        name: 'id',
+        type: ColumnType.integer,
+        isPrimaryKey: true,
+        isAutoIncrement: true,
+      ),
+    ],
+  );
+}

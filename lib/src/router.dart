@@ -18,13 +18,38 @@ class Router {
     _routes.add(Route(method.toUpperCase(), path, handler));
   }
 
-  Handler? match(String method, String path) {
-    return _routes
-        .firstWhere(
-          (r) => r.method == method && r.path == path,
-          orElse: () =>
-              Route('', '', (req, res) async => res.send('404 Not Found')),
-        )
-        .handler;
+  Handler? match(
+      String method, String pathToMatch, Map<String, String> paramsOut) {
+    for (final route in routes) {
+      if (route.method != method) continue;
+
+      final routeParts = route.path.split('/');
+      final pathParts = pathToMatch.split('/');
+
+      if (routeParts.length != pathParts.length) continue;
+
+      final params = <String, String>{};
+      var matched = true;
+
+      for (int i = 0; i < routeParts.length; i++) {
+        final routeSegment = routeParts[i];
+        final pathSegment = pathParts[i];
+
+        if (routeSegment.startsWith(':')) {
+          final key = routeSegment.substring(1);
+          params[key] = pathSegment;
+        } else if (routeSegment != pathSegment) {
+          matched = false;
+          break;
+        }
+      }
+
+      if (matched) {
+        paramsOut.addAll(params);
+        return route.handler;
+      }
+    }
+
+    return null; // No match
   }
 }

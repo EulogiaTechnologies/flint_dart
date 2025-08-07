@@ -23,6 +23,7 @@ class CreateProjectCommand extends FlintCommand {
     await _createFile('${dir.path}/pubspec.yaml', _pubspecContent(projectName));
     await _createFile('${dir.path}/lib/main.dart', _mainDartContent());
     await _createFile('${dir.path}/.gitignore', _gitignoreContent());
+    await _createProjectStructure(dir.path); // ✅ Pass the path here
 
     print('Project created successfully!');
     print('To get started:\n'
@@ -53,11 +54,14 @@ import 'package:flint_dart/flint_dart.dart';
 
 void main() {
   final app = App();
-  
-  app.get('/', (req, res) => res.send('Hello from FlintDart!'));
-  
+
+  app.get('/', (req, res) async {
+    res.send('Hello from FlintDart!');
+  });
+
   app.listen(3000);
 }
+
 ''';
 
   String _gitignoreContent() => '''
@@ -70,4 +74,20 @@ build/
 # Environment files
 .env
 ''';
+}
+
+Future<void> _createProjectStructure(String basePath) async {
+  final folders = [
+    'lib/src/controllers',
+    'lib/src/models',
+    'lib/src/routes',
+    'lib/src/middleware',
+    'lib/src/config',
+    'lib/src/utils',
+    'lib/src/services',
+  ];
+
+  for (final path in folders) {
+    await Directory('$basePath/$path').create(recursive: true);
+  }
 }

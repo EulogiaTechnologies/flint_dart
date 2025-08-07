@@ -16,12 +16,3 @@ class RunServerCommand extends FlintCommand {
     // Implementation for running server...
   }
 }
-
-class DBMigrateCommand extends FlintCommand {
-  DBMigrateCommand() : super('migrate', 'Runs database migrations');
-
-  @override
-  Future<void> execute(List<String> args) async {
-    // Implementation for migrations...
-  }
-}
